@@ -35,7 +35,8 @@
 #include<asm-generic/bug.h>
 #include<asm-generic/auxvec.h>
 
-#include <asm/uaccess.h>	/* copy_*_user */
+//#include <asm/uaccess.h>	/* copy_*_user */
+#include<linux/uaccess.h>
 
 #include "scull.h"		/* local definitions */
 
