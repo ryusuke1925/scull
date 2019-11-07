@@ -38,6 +38,8 @@
 //#include <asm/uaccess.h>	/* copy_*_user */
 #include<linux/uaccess.h>
 
+#include<linux/mutex.h>
+
 #include "scull.h"		/* local definitions */
 
 /*
@@ -396,7 +398,7 @@ ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
  * The ioctl() implementation
  */
 
-int scull_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+int scull_ioctl(/*struct inode *inode,*/ struct file *filp, unsigned int cmd, unsigned long arg)
 {
 
 	int err = 0, tmp;
@@ -654,7 +656,8 @@ int scull_init_module(void)
 	for (i = 0; i < scull_nr_devs; i++) {
 		scull_devices[i].quantum = scull_quantum;
 		scull_devices[i].qset = scull_qset;
-		init_MUTEX(&scull_devices[i].sem);
+		sema_init(&scull_devices[i].sem, 1);
+		//init_MUTEX(&scull_devices[i].sem);
 		scull_setup_cdev(&scull_devices[i], i);
 	}
 
