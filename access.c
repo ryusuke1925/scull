@@ -31,6 +31,8 @@
 #include <linux/list.h>
 #include <linux/spinlock.h>
 
+#include <linux/sched/signal.h>
+
 #include <linux/spinlock_types.h>
 #include <linux/cred.h>
 
