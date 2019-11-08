@@ -77,13 +77,13 @@ static int scull_s_release(struct inode *inode, struct file *filp)
  * The other operations for the single-open device come from the bare device
  */
 struct file_operations scull_sngl_fops = {
-	.owner =	THIS_MODULE,
-	.llseek =     	scull_llseek,
-	.read =       	scull_read,
-	.write =      	scull_write,
-	.ioctl =      	scull_ioctl,
-	.open =       	scull_s_open,
-	.release =    	scull_s_release,
+	.owner =		THIS_MODULE,
+	.llseek =     		scull_llseek,
+	.read =       		scull_read,
+	.write =      		scull_write,
+	.unlocked_ioctl =      	scull_ioctl,
+	.open =       		scull_s_open,
+	.release =    		scull_s_release,
 };
 
 
@@ -139,13 +139,13 @@ static int scull_u_release(struct inode *inode, struct file *filp)
  * The other operations for the device come from the bare device
  */
 struct file_operations scull_user_fops = {
-	.owner =      THIS_MODULE,
-	.llseek =     scull_llseek,
-	.read =       scull_read,
-	.write =      scull_write,
-	.ioctl =      scull_ioctl,
-	.open =       scull_u_open,
-	.release =    scull_u_release,
+	.owner =     	 	THIS_MODULE,
+	.llseek =     		scull_llseek,
+	.read =       		scull_read,
+	.write =      		scull_write,
+	.unlocked_ioctl =      	scull_ioctl,
+	.open =       		scull_u_open,
+	.release =    		scull_u_release,
 };
 
 
@@ -212,12 +212,12 @@ static int scull_w_release(struct inode *inode, struct file *filp)
  * The other operations for the device come from the bare device
  */
 struct file_operations scull_wusr_fops = {
-	.owner =      THIS_MODULE,
-	.llseek =     scull_llseek,
-	.read =       scull_read,
-	.write =      scull_write,
-	.ioctl =      scull_ioctl,
-	.open =       scull_w_open,
+	.owner =      		THIS_MODULE,
+	.llseek =     		scull_llseek,
+	.read =       		scull_read,
+	.write =      		scull_write,
+	.unlocked_ioctl =      	scull_ioctl,
+	.open =       		scull_w_open,
 	.release =    scull_w_release,
 };
 
@@ -262,7 +262,8 @@ static struct scull_dev *scull_c_lookfor_device(dev_t key)
 	memset(lptr, 0, sizeof(struct scull_listitem));
 	lptr->key = key;
 	scull_trim(&(lptr->device)); /* initialize it */
-	init_MUTEX(&(lptr->device.sem));
+	//init_MUTEX(&(lptr->device.sem));
+	sema_init(&(lptr->device.sem), 1);
 
 	/* place it in the list */
 	list_add(&lptr->list, &scull_c_list);
@@ -311,13 +312,13 @@ static int scull_c_release(struct inode *inode, struct file *filp)
  * The other operations for the device come from the bare device
  */
 struct file_operations scull_priv_fops = {
-	.owner =    THIS_MODULE,
-	.llseek =   scull_llseek,
-	.read =     scull_read,
-	.write =    scull_write,
-	.ioctl =    scull_ioctl,
-	.open =     scull_c_open,
-	.release =  scull_c_release,
+	.owner =    		THIS_MODULE,
+	.llseek =   		scull_llseek,
+	.read =     		scull_read,
+	.write =    		scull_write,
+	.unlocked_ioctl =    	scull_ioctl,
+	.open =     		scull_c_open,
+	.release =  		scull_c_release,
 };
 
 /************************************************************************
@@ -348,7 +349,8 @@ static void scull_access_setup (dev_t devno, struct scull_adev_info *devinfo)
 	/* Initialize the device structure */
 	dev->quantum = scull_quantum;
 	dev->qset = scull_qset;
-	init_MUTEX(&dev->sem);
+	//init_MUTEX(&dev->sem);
+	sema_init(&dev->sem, 1);
 
 	/* Do the cdev stuff. */
 	cdev_init(&dev->cdev, devinfo->fops);
