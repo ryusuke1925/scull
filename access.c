@@ -58,6 +58,8 @@ static atomic_t scull_s_available = ATOMIC_INIT(1);
 
 static int scull_s_open(struct inode *inode, struct file *filp)
 {
+	printk("access:scull_s_open\n");
+
 	struct scull_dev *dev = &scull_s_device; /* device information */
 
 	if (! atomic_dec_and_test (&scull_s_available)) {
@@ -74,6 +76,8 @@ static int scull_s_open(struct inode *inode, struct file *filp)
 
 static int scull_s_release(struct inode *inode, struct file *filp)
 {
+	printk("access:scull_s_release\n");
+
 	atomic_inc(&scull_s_available); /* release the device */
 	return 0;
 }
@@ -106,6 +110,8 @@ static spinlock_t scull_u_lock = __SPIN_LOCK_UNLOCKED();
 
 static int scull_u_open(struct inode *inode, struct file *filp)
 {
+	printk("access:scull_u_open\n");
+
 	struct scull_dev *dev = &scull_u_device; /* device information */
 
 	spin_lock(&scull_u_lock);
@@ -133,6 +139,8 @@ static int scull_u_open(struct inode *inode, struct file *filp)
 
 static int scull_u_release(struct inode *inode, struct file *filp)
 {
+	printk("access:scull_u_release\n");
+
 	spin_lock(&scull_u_lock);
 	scull_u_count--; /* nothing else */
 	spin_unlock(&scull_u_lock);
@@ -168,6 +176,8 @@ static spinlock_t scull_w_lock = __SPIN_LOCK_UNLOCKED();
 
 static inline int scull_w_available(void)
 {
+	printk("access:scull_w_available\n");
+
 	return scull_w_count == 0 ||
 		scull_w_owner.val == current->cred->uid.val ||
 		scull_w_owner.val == current->cred->euid.val ||
@@ -178,6 +188,8 @@ static inline int scull_w_available(void)
 static int scull_w_open(struct inode *inode, struct file *filp)
 {
 	struct scull_dev *dev = &scull_w_device; /* device information */
+
+	printk("access:scull_w_open\n");
 
 	spin_lock(&scull_w_lock);
 	while (! scull_w_available()) {
@@ -202,6 +214,8 @@ static int scull_w_open(struct inode *inode, struct file *filp)
 static int scull_w_release(struct inode *inode, struct file *filp)
 {
 	int temp;
+
+	printk("access:scull_w_release\n");
 
 	spin_lock(&scull_w_lock);
 	scull_w_count--;
@@ -254,6 +268,8 @@ static struct scull_dev *scull_c_lookfor_device(dev_t key)
 {
 	struct scull_listitem *lptr;
 
+	printk("access:scull_dev\n");
+
 	list_for_each_entry(lptr, &scull_c_list, list) {
 		if (lptr->key == key)
 			return &(lptr->device);
@@ -282,6 +298,8 @@ static int scull_c_open(struct inode *inode, struct file *filp)
 	struct scull_dev *dev;
 	dev_t key;
  
+	printk("access:scull_c_open\n");
+
 	if (!current->signal->tty) { 
 		PDEBUG("Process \"%s\" has no ctl tty\n", current->comm);
 		return -EINVAL;
@@ -305,6 +323,7 @@ static int scull_c_open(struct inode *inode, struct file *filp)
 
 static int scull_c_release(struct inode *inode, struct file *filp)
 {
+	printk("access:scull_c_release\n");
 	/*
 	 * Nothing to do, because the device is persistent.
 	 * A `real' cloned device should be freed on last close
@@ -352,6 +371,7 @@ static void scull_access_setup (dev_t devno, struct scull_adev_info *devinfo)
 	struct scull_dev *dev = devinfo->sculldev;
 	int err;
 
+	printk("access:scull_access_setup\n");
 	/* Initialize the device structure */
 	dev->quantum = scull_quantum;
 	dev->qset = scull_qset;
@@ -376,6 +396,7 @@ int scull_access_init(dev_t firstdev)
 {
 	int result, i;
 
+	printk("access:scull_w_init\n");
 	/* Get our number space */
 	result = register_chrdev_region (firstdev, SCULL_N_ADEVS, "sculla");
 	if (result < 0) {
@@ -396,6 +417,8 @@ int scull_access_init(dev_t firstdev)
  */
 void scull_access_cleanup(void)
 {
+	printk("access:scull_access_cleanup\n");
+
 	struct scull_listitem *lptr, *next;
 	int i;
 

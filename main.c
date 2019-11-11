@@ -74,6 +74,8 @@ int scull_trim(struct scull_dev *dev)
 	int qset = dev->qset;   /* "dev" is not-null */
 	int i;
 
+	printk("main:scull_trim\n");
+
 	for (dptr = dev->data; dptr; dptr = next) { /* all the list items */
 		if (dptr->data) {
 			for (i = 0; i < qset; i++)
@@ -88,6 +90,7 @@ int scull_trim(struct scull_dev *dev)
 	dev->quantum = scull_quantum;
 	dev->qset = scull_qset;
 	dev->data = NULL;
+
 	return 0;
 }
 #ifdef SCULL_DEBUG /* use proc only if debugging */
@@ -100,6 +103,8 @@ int scull_read_procmem(char *buf, char **start, off_t offset,
 {
 	int i, j, len = 0;
 	int limit = count - 80; /* Don't print more than this */
+
+	printk("main:scull_read_procmem\n");
 
 	for (i = 0; i < scull_nr_devs && len <= limit; i++) {
 		struct scull_dev *d = &scull_devices[i];
@@ -122,6 +127,7 @@ int scull_read_procmem(char *buf, char **start, off_t offset,
 		up(&scull_devices[i].sem);
 	}
 	*eof = 1;
+
 	return len;
 }
 
@@ -137,21 +143,29 @@ int scull_read_procmem(char *buf, char **start, off_t offset,
  */
 static void *scull_seq_start(struct seq_file *s, loff_t *pos)
 {
+	printk("main:scull_seq_start\n");
+
 	if (*pos >= scull_nr_devs)
 		return NULL;   /* No more to read */
+
 	return scull_devices + *pos;
 }
 
 static void *scull_seq_next(struct seq_file *s, void *v, loff_t *pos)
 {
+	
+	printk("main:scull_seq_next\n");
+
 	(*pos)++;
 	if (*pos >= scull_nr_devs)
 		return NULL;
+	
 	return scull_devices + *pos;
 }
 
 static void scull_seq_stop(struct seq_file *s, void *v)
 {
+	printk("main:scull_seq_stop\n");
 	/* Actually, there's nothing to do here */
 }
 
@@ -160,6 +174,8 @@ static int scull_seq_show(struct seq_file *s, void *v)
 	struct scull_dev *dev = (struct scull_dev *) v;
 	struct scull_qset *d;
 	int i;
+
+	printk("main:scull_seq_show\n");
 
 	if (down_interruptible(&dev->sem))
 		return -ERESTARTSYS;
@@ -195,6 +211,7 @@ static struct seq_operations scull_seq_ops = {
  */
 static int scull_proc_open(struct inode *inode, struct file *file)
 {
+	printk("main:scull_proc_open\n");
 	return seq_open(file, &scull_seq_ops);
 }
 
@@ -216,6 +233,8 @@ static struct file_operations scull_proc_ops = {
 
 static void scull_create_proc(void)
 {
+	printk("main:scull_create_proc\n");
+
 	struct proc_dir_entry *entry;
 	create_proc_read_entry("scullmem", 0 /* default mode */,
 			NULL /* parent dir */, scull_read_procmem,
@@ -227,6 +246,7 @@ static void scull_create_proc(void)
 
 static void scull_remove_proc(void)
 {
+	printk("main:scull_remove_proc\n");
 	/* no problem if it was not registered */
 	remove_proc_entry("scullmem", NULL /* parent dir */);
 	remove_proc_entry("scullseq", NULL);
@@ -245,6 +265,7 @@ static void scull_remove_proc(void)
 
 int scull_open(struct inode *inode, struct file *filp)
 {
+	printk("main:scull_open\n");
 	struct scull_dev *dev; /* device information */
 
 	dev = container_of(inode->i_cdev, struct scull_dev, cdev);
@@ -262,6 +283,7 @@ int scull_open(struct inode *inode, struct file *filp)
 
 int scull_release(struct inode *inode, struct file *filp)
 {
+	printk("main:scull_release\n");
 	return 0;
 }
 /*
@@ -271,6 +293,7 @@ struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 {
 	struct scull_qset *qs = dev->data;
 
+	printk("main:scull_follow\n");
         /* Allocate first qset explicitly if need be */
 	if (! qs) {
 		qs = dev->data = kmalloc(sizeof(struct scull_qset), GFP_KERNEL);
@@ -300,6 +323,8 @@ struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
                 loff_t *f_pos)
 {
+	printk("main:scull_read\n");
+
 	struct scull_dev *dev = filp->private_data; 
 	struct scull_qset *dptr;	/* the first listitem */
 	int quantum = dev->quantum, qset = dev->qset;
@@ -344,6 +369,8 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
                 loff_t *f_pos)
 {
+	printk("main:scull_write\n");
+
 	struct scull_dev *dev = filp->private_data;
 	struct scull_qset *dptr;
 	int quantum = dev->quantum, qset = dev->qset;
@@ -401,6 +428,7 @@ ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
 long scull_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 /*int scull_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg)*/
 {
+	printk("main:scull_ioctl\n");
 
 	int err = 0, tmp;
 	int retval = 0;
@@ -530,6 +558,8 @@ long scull_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 loff_t scull_llseek(struct file *filp, loff_t off, int whence)
 {
+	printk("main:scull_llseek\n");
+
 	struct scull_dev *dev = filp->private_data;
 	loff_t newpos;
 
@@ -577,6 +607,8 @@ struct file_operations scull_fops = {
  */
 void scull_cleanup_module(void)
 {
+	printk("main:scull_cleanup\n");
+
 	int i;
 	dev_t devno = MKDEV(scull_major, scull_minor);
 
@@ -608,6 +640,8 @@ void scull_cleanup_module(void)
  */
 static void scull_setup_cdev(struct scull_dev *dev, int index)
 {
+	printk("main:scull_setup_cdev\n");
+
 	int err, devno = MKDEV(scull_major, scull_minor + index);
     
 	cdev_init(&dev->cdev, &scull_fops);
@@ -622,6 +656,7 @@ static void scull_setup_cdev(struct scull_dev *dev, int index)
 
 int scull_init_module(void)
 {
+	printk("main:scull_init_module\n");
 	int result, i;
 	dev_t dev = 0;
 
@@ -630,9 +665,11 @@ int scull_init_module(void)
  * major unless directed otherwise at load time.
  */
 	if (scull_major) {
+		printk("main:scull_init_module:true");
 		dev = MKDEV(scull_major, scull_minor);
 		result = register_chrdev_region(dev, scull_nr_devs, "scull");
 	} else {
+		printk("main:scull_init_module:false");
 		result = alloc_chrdev_region(&dev, scull_minor, scull_nr_devs,
 				"scull");
 		scull_major = MAJOR(dev);
